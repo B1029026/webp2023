@@ -1,1 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+      h1 {
+        display: flex;
+        align-items: center;
+      }
 
+      h1 input {
+        height: 2em;
+        margin-left: 1em;
+      }
+
+      table {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      td, th {
+        border: 1px solid #ddd;
+        padding: 6px;
+      }
+
+      tr:nth-child(even) {background-color: #f2f2f2;}
+
+      tr:hover {background-color: #ddd;}
+
+      th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04AA6D;
+        color: white;
+      }
+
+      .breadcrumb {
+        padding: 12px 0px;
+        list-style: none;
+      }
+
+      .breadcrumb li {display: inline;}
+    </style>
+</head>
+<body>
+  <h1>景點觀光展覽資訊 <input type="text" id="search" onchange="update()"></h1>
+  <table id="csie" class="table table-stripped table-hover">
+    <tr>
+      <th>名稱</th>
+      <th>地點</th>
+      <th>票價</th>
+    </tr>
+  </table>
+  <ul class="breadcrumb">
+    <li><button onclick="pageUp()">上一頁</button></li>
+    <li id="pagination"> 0 / 0 </li>
+    <li><button onclick="pageDown()">下一頁</button></li>
+  </ul>
+  <script>
+    var openUrl = "https://cloud.culture.tw/frontsite/trans/SearchShowAction.do?method=doFindTypeJ&category=6";
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', openUrl, true);
+    xhr.send();
+    xhr.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        dataset = JSON.parse(this.responseText);
+        activePage = 1;
+        addNewData();
+      }
+    }
+
+    var dataset = [];
+    var activePage = 0;
+
+    function addNewData() {
+      var myTable = document.getElementById("csie");
+      var search = document.getElementById("search").value;
+      var newData = dataset.filter(function(data) {
+        return data['title'].includes(search);
+      });
+      if (activePage < 1)
+        activePage = 1;
+      if (activePage > Math.ceil(newData.length / 10))
+        activePage = Math.ceil(newData.length / 10);
+
+      newData.slice((activePage - 1) * 10, activePage * 10).forEach(function(data, index) {
+        var row = myTable.insertRow(-1);
+        row.insertCell(0).innerHTML = data['title'];
+        row.insertCell(1).innerHTML = data['showInfo'][0]['location'];
+        row.insertCell(2).innerHTML = data['showInfo'][0]['price'];
+      });
+
+      var myPage = document.getElementById("pagination");
+      myPage.innerHTML = ` ${activePage} / ${Math.ceil(newData.length / 10)} `;
+    }
+
+    function update() {
+      var myTable = document.getElementById("csie");
+      while (myTable.rows.length > 1)
+        myTable.deleteRow(-1);
+      addNewData();
+    }
+
+    function pageUp() {
+      activePage--;
+      update();
+    }
+
+    function pageDown() {
+      activePage++;
+      update();
+    }
+  </script>
+</body>
+</html>
